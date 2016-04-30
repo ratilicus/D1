@@ -1,0 +1,22 @@
+MaterialDef simple {
+
+    MaterialParameters {
+
+    }
+
+     Technique {
+        VertexShader GLSL400:   MatDefs/simple.vert
+//        VertexShader GLSL100:   MatDefs/HM.vert
+
+        TessellationControlShader GLSL400:   MatDefs/Tess.tsctrl
+        TessellationEvaluationShader GLSL400:   MatDefs/Tess.tseval
+
+        //FragmentShader GLSL400: MatDefs/HM.frag
+        FragmentShader GLSL400:   MatDefs/simple.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+        }
+    }
+
+}

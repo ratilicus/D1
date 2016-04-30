@@ -1,0 +1,52 @@
+/*
+Height Map Tesselation Control Shader
+By: Adam Dybczak
+*/
+
+
+layout(vertices=3) out;
+
+in vec4 worldPos[];
+in vec2 texCoord[];
+
+out vec2 tcTexCoord[];
+
+in vec3 AmbientSum[];
+in vec4 DiffuseSum[];
+in vec3 SpecularSum[];
+
+out vec3 tcAmbientSum[];
+out vec4 tcDiffuseSum[];
+out vec3 tcSpecularSum[];
+
+in vec3 vViewDir[];
+in vec4 vLightDir[];
+
+out vec3 tcViewDir[];
+out vec4 tcLightDir[];
+
+
+void main(){
+    if (gl_InvocationID == 0){
+        // TODO: fix patch tearing
+        int o = int(clamp(32.0-pow(0.3*min(min(
+                    worldPos[0].z,
+                    worldPos[1].z),
+                    worldPos[2].z), 2), 1.0, 16.0))*2;
+
+        gl_TessLevelOuter[0]=o;
+        gl_TessLevelOuter[1]=o;
+        gl_TessLevelOuter[2]=o;
+
+        gl_TessLevelInner[0]=o;
+    }
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    tcTexCoord[gl_InvocationID] = texCoord[gl_InvocationID];
+    tcAmbientSum[gl_InvocationID] = AmbientSum[gl_InvocationID];
+    tcDiffuseSum[gl_InvocationID] = DiffuseSum[gl_InvocationID];
+    tcSpecularSum[gl_InvocationID] = SpecularSum[gl_InvocationID];
+    tcViewDir[gl_InvocationID] = vViewDir[gl_InvocationID];
+    tcLightDir[gl_InvocationID] = vLightDir[gl_InvocationID];
+}
+
+
