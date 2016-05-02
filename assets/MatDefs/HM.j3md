@@ -1,15 +1,14 @@
-/*
-Height Map Material Definition
-By: Adam Dybczak
-Base File: Common.MatDefs.Light.Lighting.frag
-*/
+// Height Map Material Definition
+// By: Adam Dybczak
+// Base File: Common.MatDefs.Light.Lighting.frag
+
 
 
 MaterialDef Phong Lighting {
 
     MaterialParameters {
         Float SphereRadius
-        Float Timer: 0
+        Float Timer : 0
 
         // Compute vertex lighting in the shader
         // For better performance
