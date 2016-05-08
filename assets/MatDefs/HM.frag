@@ -7,6 +7,7 @@ Base File: Common.MatDefs.Light.Lighting.frag
 
 #import "Common/ShaderLib/BlinnPhongLighting.glsllib"
 #import "Common/ShaderLib/Lighting.glsllib"
+#import "Common/ShaderLib/Instancing.glsllib"
 
 uniform float m_Timer;
 
@@ -23,14 +24,30 @@ in vec3 vViewDir;
 in vec4 vLightDir;
 in vec3 lightVec;
 
-in vec3 vNormal;
+//in vec3 vNormal;
 out vec4 FragColor;
+
+in vec3 p;
+in vec3 pu;
+in vec3 pv;
+in vec2 tu;
+in vec2 tv;
 
 uniform float m_AlphaDiscardThreshold;
 uniform float m_Shininess;
 
-
-vec4 getColor(sampler2D tex, vec2 tc) {
+// TODO: turn these into uniform + abstract the height layers
+vec3 deep_water = vec3(0.0, 0.0, 0.2);
+vec3 water = vec3(0.2, 0.2, 0.51);
+vec3 sand = vec3(0.86, 0.82, 0.71);
+vec3 grass = vec3(0.72, 0.76, 0.45);
+vec3 dark_grass = vec3(0.18, 0.27, 0.07);
+vec3 ice = vec3(0.9, 0.9, 0.9);
+float b_dwater = 0.5;
+float b_water = 0.55;
+float b_sand = 0.58;
+ 
+vec3 getHCR(sampler2D tex, vec2 tc) {
     vec2 t1 = vec2(mod(tc[1] * 10.0, 1.0), fract(tc[0] * 10.0));
     vec2 t2 = vec2(mod(tc[0] * 100.0, 1.0), fract(tc[1] * 100.0));
     vec2 t3 = vec2(mod(tc[0] * 1000.0, 1.0), fract(tc[1] * 1000.0));
@@ -39,26 +56,23 @@ vec4 getColor(sampler2D tex, vec2 tc) {
     vec4 c2 = texture2D(tex, t1)-0.5;
     vec4 c3 = texture2D(tex, t2)-0.5;
     vec4 c4 = texture2D(tex, t3)-0.5;
-    float h = 0.9*c1.r + 0.25*c2.g + 0.05*c3.b + 0.02*c4.r;
-    float c = 0.9*c1.g + 0.25*c2.b + 0.3*c3.r + 0.2*c4.g;
-    float r = 0.9*c1.b + 0.25*c2.r + 0.3*c3.g + 0.6*c4.b;
+    return vec3(
+        0.9*c1.r + 0.1*c2.g + 0.05*c3.b + 0.02*c4.r,
+        0.9*c1.g + 0.25*c2.b + 0.3*c3.r + 0.2*c4.g,
+        0.9*c1.b + 0.25*c2.r + 0.3*c3.g + 0.6*c4.b);
+}
 
-    // TODO: turn these into uniform + abstract the height layers
-    vec3 deep_water = vec3(0.0, 0.0, 0.2);
-    vec3 water = vec3(0.2, 0.2, 0.51);
-    vec3 sand = vec3(0.86, 0.82, 0.71);
-    vec3 grass = vec3(0.72, 0.76, 0.45);
-    vec3 dark_grass = vec3(0.18, 0.27, 0.07);
-    vec3 ice = vec3(0.9, 0.9, 0.9);
-    float b_dwater = 0.5;
-    float b_water = 0.55;
-    float b_sand = 0.58;
+vec4 getColor(vec3 hcr) {
+
+    float h = hcr.x;
+    float c = hcr.y;
+    float r = hcr.z;
 
     vec4 color;
     color.a = 1.0;
     if (h < b_dwater) {
       // deep water
-      color.rgb = mix(deep_water, water, (h+ 0.1*c3.b)/b_dwater)*c;
+      color.rgb = mix(deep_water, water, (h+ 0.1*r)/b_dwater)*c;
       color.a = 1.5 + 0.15* sin(10f*m_Timer*c);
 
     } else if (h < b_water) {
@@ -70,29 +84,48 @@ vec4 getColor(sampler2D tex, vec2 tc) {
     } else if (h < b_sand) {
       // sand -> grass
       color.rgb = mix(sand, grass, c)*r;
-      color.a = c;
+      color.a = 0.25+c;
 
     } else {
       // grass
       color.rgb = mix(grass, dark_grass, c)*r;
-      color.a = c;
+      color.a = 0.25+c;
     }
 
-    float o = clamp(0.026666 * gl_FragCoord.z / gl_FragCoord.w,0.0, 0.8);
-
-    vec4 final_color = vec4(o)*o + color*(1.0 - o);
-    final_color.a = color.a;
-
-    return final_color;
+    return color;
 }
 
 
 void main(){
-    vec4 diffuseColor = getColor(m_DiffuseMap, texCoord);
-    vec4 specularColor = vec4(1.0)*diffuseColor.a;
+    vec3 hcr = getHCR(m_DiffuseMap, texCoord);
+    vec4 color = getColor(hcr);
+
+    float o = clamp(0.026666 * gl_FragCoord.z / gl_FragCoord.w,0.0, 0.8);
+    float o1 = 1.0 - o;
+
+    vec4 diffuseColor = vec4(o)*o + color*(o1);
+
+    vec4 specularColor = vec4(1.0)*color.a;
     diffuseColor.a = 1.0;
 
-    float alpha = DiffuseSum.a * diffuseColor.a;
+
+    // NORMALS STUFF
+	// get height at nearby coords and figure out normal 
+    float s = 1000.0;
+    vec3 vNormal;
+
+    if (hcr.x < b_water) {
+        vNormal = normalize(TransformNormal(p));
+    } else {
+        float tuh = getHCR(m_DiffuseMap, texCoord+tu/s).x;
+        float tvh = getHCR(m_DiffuseMap, texCoord+tv/s).x;
+
+        vec3 up = p*hcr.x;
+        vNormal = normalize(TransformNormal(p*o1+o*normalize(cross((p + pv/s) * tvh - up,
+                             (p + pu/s) * tuh - up))));
+    }
+
+    float alpha = DiffuseSum.a * color.a;
 
     vec4 lightDir = vLightDir;
     lightDir.xyz = normalize(lightDir.xyz);

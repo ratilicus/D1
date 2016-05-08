@@ -28,6 +28,12 @@ out vec3 vViewDir;
 out vec4 vLightDir;
 out vec3 vNormal;
 
+out vec3 p;
+out vec3 pu;
+out vec3 pv;
+out vec2 tu;
+out vec2 tv;
+
 uniform sampler2D m_DiffuseMap;
 uniform float m_SphereRadius;
 
@@ -40,7 +46,7 @@ float getHeight(sampler2D tex, vec2 tc) {
     vec4 c2 = texture2D(tex, t1)-0.5;
     vec4 c3 = texture2D(tex, t2)-0.5;
     vec4 c4 = texture2D(tex, t3)-0.5;
-    float h = 0.9*c1.r + 0.25*c2.g + 0.05*c3.b + 0.002*c4.r;
+    float h = 0.9*c1.r + 0.1*c2.g + 0.05*c3.b + 0.002*c4.r;
 
     float b_water = 0.55;
 
@@ -61,7 +67,8 @@ void main(){
         gl_TessCoord.y * gl_in[1].gl_Position +
         gl_TessCoord.z * gl_in[2].gl_Position);
 
-    gl_Position.xyz = normalize(gl_Position.xyz) * m_SphereRadius * getHeight(m_DiffuseMap, texCoord);
+    p = normalize(gl_Position.xyz);
+    gl_Position.xyz = p * m_SphereRadius * getHeight(m_DiffuseMap, texCoord);
 
     AmbientSum = (
         gl_TessCoord.x * tcAmbientSum[0] +
@@ -88,11 +95,18 @@ void main(){
         gl_TessCoord.y * tcLightDir[1] +
         gl_TessCoord.z * tcLightDir[2]);
 
-    vec3 a = gl_in[0].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[0]);
-    vec3 b = gl_in[1].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[1]);
-    vec3 c = gl_in[2].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[2]);
+//    vec3 a = gl_in[0].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[0]);
+//    vec3 b = gl_in[1].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[1]);
+//    vec3 c = gl_in[2].gl_Position.xyz * m_SphereRadius * getHeight(m_DiffuseMap, tcTexCoord[2]);
 
-    vNormal = normalize(TransformNormal(gl_Position.xyz));
+    tu = tcTexCoord[0] - texCoord;
+    tv = tcTexCoord[1] - texCoord;
+
+    pu = normalize(gl_in[0].gl_Position.xyz) - p;
+    pv = normalize(gl_in[1].gl_Position.xyz) - p;
+    
+
+//    vNormal = normalize(TransformNormal(gl_Position.xyz));
     gl_Position = TransformWorldViewProjection(gl_Position);
 }
 

@@ -241,6 +241,6 @@ sphereGeo2.getMesh().setPatchVertexCount(3);
             vel.addLocal(camUp.mult(AY*.3f));
         }
         cam.setLocation(cam.getLocation().add(vel));
-        planetNode.rotate(0f, 0.125f*tpf, 0);
+//        planetNode.rotate(0f, 0.125f*tpf, 0);
     }
 }
