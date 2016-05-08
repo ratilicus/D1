@@ -95,34 +95,41 @@ vec4 getColor(vec3 hcr) {
     return color;
 }
 
+float getHeight(float h) {
+    h = clamp(h, b_water, 1.0)-b_water;
+    return 1.0+0.1*h;
+}
 
 void main(){
     vec3 hcr = getHCR(m_DiffuseMap, texCoord);
     vec4 color = getColor(hcr);
 
-    float o = clamp(0.026666 * gl_FragCoord.z / gl_FragCoord.w,0.0, 0.8);
+    // quantizing the level for display purposes to clearly see borders
+    float o = int(clamp(0.326666 * gl_FragCoord.z / gl_FragCoord.w, 1.0, 9.0))/10.0;
     float o1 = 1.0 - o;
 
-    vec4 diffuseColor = vec4(o)*o + color*(o1);
+    vec4 diffuseColor = mix(color, vec4(0.8), o*0.8);
 
     vec4 specularColor = vec4(1.0)*color.a;
     diffuseColor.a = 1.0;
 
 
-    // NORMALS STUFF
-	// get height at nearby coords and figure out normal 
-    float s = 1000.0;
+    // get height at nearby coords and figure out normal 
+    // TODO: fix issue with borders
+    float s = mix(5.0, 500.0, o1);
     vec3 vNormal;
 
     if (hcr.x < b_water) {
         vNormal = normalize(TransformNormal(p));
     } else {
-        float tuh = getHCR(m_DiffuseMap, texCoord+tu/s).x;
-        float tvh = getHCR(m_DiffuseMap, texCoord+tv/s).x;
+        float h = getHeight(hcr.x);
 
-        vec3 up = p*hcr.x;
-        vNormal = normalize(TransformNormal(p*o1+o*normalize(cross((p + pv/s) * tvh - up,
-                             (p + pu/s) * tuh - up))));
+        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s).x);
+        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s).x);
+
+        vec3 up = p*h;
+        vNormal = normalize(TransformNormal(cross((p + pu/s) * tuh - up,
+                             (p + pv/s) * tvh - up)));
     }
 
     float alpha = DiffuseSum.a * color.a;

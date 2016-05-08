@@ -232,13 +232,13 @@ sphereGeo2.getMesh().setPatchVertexCount(3);
         // TODO: add roll
         // FIXME: camera gets goofy if flipped upside down
         if (AZ!=0) {
-            vel.addLocal(camDir.mult(AZ*.3f));
+            vel.addLocal(camDir.mult(AZ*.1f));
         }
         if (AX!=0) {
-            vel.addLocal(camLeft.mult(AX*.3f));
+            vel.addLocal(camLeft.mult(AX*.1f));
         }
         if (AY!=0) {
-            vel.addLocal(camUp.mult(AY*.3f));
+            vel.addLocal(camUp.mult(AY*.1f));
         }
         cam.setLocation(cam.getLocation().add(vel));
 //        planetNode.rotate(0f, 0.125f*tpf, 0);
