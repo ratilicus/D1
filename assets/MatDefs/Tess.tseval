@@ -37,6 +37,9 @@ out vec2 tv;
 uniform sampler2D m_DiffuseMap;
 uniform float m_SphereRadius;
 
+float b_water = 0.55;
+
+
 float getHeight(sampler2D tex, vec2 tc) {
     vec2 t1 = vec2(fract(tc[1] * 10.0), fract(tc[0] * 10.0));
     vec2 t2 = vec2(fract(tc[0] * 100.0), fract(tc[1] * 100.0));
@@ -47,8 +50,6 @@ float getHeight(sampler2D tex, vec2 tc) {
     vec4 c3 = texture2D(tex, t2)-0.5;
     vec4 c4 = texture2D(tex, t3)-0.5;
     float h = 0.9*c1.r + 0.1*c2.g + 0.05*c3.b + 0.002*c4.r;
-
-    float b_water = 0.55;
 
     h = clamp(h, b_water, 1.0)-b_water;
 

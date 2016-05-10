@@ -47,20 +47,20 @@ float b_dwater = 0.5;
 float b_water = 0.55;
 float b_sand = 0.58;
  
-vec3 getHCR(sampler2D tex, vec2 tc) {
-    vec2 t1 = vec2(mod(tc[1] * 10.0, 1.0), fract(tc[0] * 10.0));
-    vec2 t2 = vec2(mod(tc[0] * 100.0, 1.0), fract(tc[1] * 100.0));
-    vec2 t3 = vec2(mod(tc[0] * 1000.0, 1.0), fract(tc[1] * 1000.0));
 
-    vec4 c1 = texture2D(tex, tc);
-    vec4 c2 = texture2D(tex, t1)-0.5;
-    vec4 c3 = texture2D(tex, t2)-0.5;
-    vec4 c4 = texture2D(tex, t3)-0.5;
-    return vec3(
-        0.9*c1.r + 0.1*c2.g + 0.05*c3.b + 0.02*c4.r,
-        0.9*c1.g + 0.25*c2.b + 0.3*c3.r + 0.2*c4.g,
-        0.9*c1.b + 0.25*c2.r + 0.3*c3.g + 0.6*c4.b);
+vec4 getHCR(sampler2D tex, vec2 tc, int loops) {
+    vec4 c = texture2D(tex, tc);
+    float m = 10.0;
+    float d = 0.1;
+    for (int i=1; i <= loops; i++) {
+        vec3 sc = (texture2D(tex, fract(tc * m)).rgb-0.5) * d;
+        c.rgb += vec3(sc[int(mod(i, 3))], sc[int(mod(i+1, 3))],sc[int(mod(i+2, 3))]);
+        m *= 10.0;
+        d /= 3.0;
+    }
+    return c;
 }
+
 
 vec4 getColor(vec3 hcr) {
 
@@ -101,14 +101,14 @@ float getHeight(float h) {
 }
 
 void main(){
-    vec3 hcr = getHCR(m_DiffuseMap, texCoord);
+    // quantizing the level for display purposes to clearly see borders
+    int o = int(clamp(0.326666 * gl_FragCoord.z / gl_FragCoord.w / 2, 1.0, 5.0));
+    float of = o / 5.0;
+
+    vec3 hcr = getHCR(m_DiffuseMap, texCoord, 5-o).xyz;
     vec4 color = getColor(hcr);
 
-    // quantizing the level for display purposes to clearly see borders
-    float o = int(clamp(0.326666 * gl_FragCoord.z / gl_FragCoord.w, 1.0, 9.0))/10.0;
-    float o1 = 1.0 - o;
-
-    vec4 diffuseColor = mix(color, vec4(0.8), o*0.8);
+    vec4 diffuseColor = mix(color, vec4(0.8), of*0.8);
 
     vec4 specularColor = vec4(1.0)*color.a;
     diffuseColor.a = 1.0;
@@ -116,7 +116,7 @@ void main(){
 
     // get height at nearby coords and figure out normal 
     // TODO: fix issue with borders
-    float s = mix(5.0, 500.0, o1);
+    float s = mix(5.0, 500.0, 1.0 - of);
     vec3 vNormal;
 
     if (hcr.x < b_water) {
@@ -124,8 +124,8 @@ void main(){
     } else {
         float h = getHeight(hcr.x);
 
-        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s).x);
-        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s).x);
+        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s, 5-o).x);
+        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s, 5-o).x);
 
         vec3 up = p*h;
         vNormal = normalize(TransformNormal(cross((p + pu/s) * tuh - up,

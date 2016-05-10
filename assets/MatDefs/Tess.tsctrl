@@ -25,20 +25,23 @@ in vec4 vLightDir[];
 out vec3 tcViewDir[];
 out vec4 tcLightDir[];
 
+int getFrag(vec4 pos) {
+   return 32-int(clamp(0.326666 * pos.z, 1.0, 31.0));
+}
+
 
 void main(){
     if (gl_InvocationID == 0){
         // TODO: fix patch tearing
-        int o = int(clamp(32.0-pow(0.3*min(min(
-                    worldPos[0].z,
-                    worldPos[1].z),
-                    worldPos[2].z), 2), 1.0, 16.0))*2;
+        int p0 = getFrag(worldPos[0]);
+        int p1 = getFrag(worldPos[1]);
+        int p2 = getFrag(worldPos[2]);
 
-        gl_TessLevelOuter[0]=o;
-        gl_TessLevelOuter[1]=o;
-        gl_TessLevelOuter[2]=o;
+        gl_TessLevelOuter[0] = max(p1, p2);
+        gl_TessLevelOuter[1] = max(p0, p2);
+        gl_TessLevelOuter[2] = max(p0, p1);
 
-        gl_TessLevelInner[0]=o;
+        gl_TessLevelInner[0]=max(p0, max(p1, p2));
     }
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
     tcTexCoord[gl_InvocationID] = texCoord[gl_InvocationID];
