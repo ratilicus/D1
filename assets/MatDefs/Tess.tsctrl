@@ -26,7 +26,7 @@ out vec3 tcViewDir[];
 out vec4 tcLightDir[];
 
 int getFrag(vec4 pos) {
-   return 32-int(clamp(0.326666 * pos.z, 1.0, 31.0));
+   return 31-int(clamp(pow(0.326666 * pos.z/2, 2.0), 1.0, 30.0));
 }
 
 

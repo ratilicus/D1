@@ -30,8 +30,10 @@ out vec4 FragColor;
 in vec3 p;
 in vec3 pu;
 in vec3 pv;
+in vec3 pw;
 in vec2 tu;
 in vec2 tv;
+in vec2 tw;
 
 uniform float m_AlphaDiscardThreshold;
 uniform float m_Shininess;
@@ -105,18 +107,17 @@ void main(){
     int o = int(clamp(0.326666 * gl_FragCoord.z / gl_FragCoord.w / 2, 1.0, 5.0));
     float of = o / 5.0;
 
-    vec3 hcr = getHCR(m_DiffuseMap, texCoord, 5-o).xyz;
+    vec3 hcr = getHCR(m_DiffuseMap, texCoord, 6-o).xyz;
     vec4 color = getColor(hcr);
 
-    vec4 diffuseColor = mix(color, vec4(0.8), of*0.8);
+    vec4 diffuseColor = mix(color, vec4(0.8), of*0.2);
 
-    vec4 specularColor = vec4(1.0)*color.a;
-    diffuseColor.a = 1.0;
+    vec4 specularColor = vec4(1.0)*color.a*(1.0-of*0.7);
 
 
     // get height at nearby coords and figure out normal 
     // TODO: fix issue with borders
-    float s = mix(5.0, 500.0, 1.0 - of);
+    float s = mix(250.0, 1000.0, 1.0 - of);
     vec3 vNormal;
 
     if (hcr.x < b_water) {
@@ -124,12 +125,16 @@ void main(){
     } else {
         float h = getHeight(hcr.x);
 
-        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s, 5-o).x);
-        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s, 5-o).x);
+        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s, 6-o).x);
+        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s, 6-o).x);
+        float twh = getHeight(getHCR(m_DiffuseMap, texCoord+tw/s, 6-o).x);
 
         vec3 up = p*h;
-        vNormal = normalize(TransformNormal(cross((p + pu/s) * tuh - up,
-                             (p + pv/s) * tvh - up)));
+        vNormal = normalize(TransformNormal(normalize(
+                    cross((p + pu/s) * tuh - up, (p + pv/s) * tvh - up)+
+                    cross((p + pv/s) * tvh - up, (p + pw/s) * twh - up)+
+                    cross((p + pw/s) * twh - up, (p + pu/s) * tuh - up)
+            )));
     }
 
     float alpha = DiffuseSum.a * color.a;
@@ -149,10 +154,10 @@ void main(){
         }
     }
 
-    vec2   light = computeLighting(vNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, m_Shininess) ;
+    vec2   light = computeLighting(vNormal, viewDir, lightDir.xyz, lightDir.w * spotFallOff, m_Shininess);
 
-    FragColor.rgb =  AmbientSum       * diffuseColor.rgb  +
-                     DiffuseSum.rgb   * diffuseColor.rgb  * vec3(light.x) +
-                     SpecularSum * specularColor.rgb * vec3(light.y);
+    FragColor.rgb =  AmbientSum     * diffuseColor.rgb  +
+                     DiffuseSum.rgb * diffuseColor.rgb  * vec3(light.x) +
+                     SpecularSum    * specularColor.rgb * vec3(light.y);
     FragColor.a = alpha;
 }

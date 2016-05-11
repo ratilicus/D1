@@ -31,26 +31,31 @@ out vec3 vNormal;
 out vec3 p;
 out vec3 pu;
 out vec3 pv;
+out vec3 pw;
 out vec2 tu;
 out vec2 tv;
+out vec2 tw;
 
 uniform sampler2D m_DiffuseMap;
 uniform float m_SphereRadius;
 
 float b_water = 0.55;
 
+vec4 getHCR(sampler2D tex, vec2 tc, int loops) {
+    vec4 c = texture2D(tex, tc);
+    float m = 10.0;
+    float d = 0.1;
+    for (int i=1; i <= loops; i++) {
+        vec3 sc = (texture2D(tex, fract(tc * m)).rgb-0.5) * d;
+        c.rgb += vec3(sc[int(mod(i, 3))], sc[int(mod(i+1, 3))],sc[int(mod(i+2, 3))]);
+        m *= 10.0;
+        d /= 3.0;
+    }
+    return c;
+}
 
 float getHeight(sampler2D tex, vec2 tc) {
-    vec2 t1 = vec2(fract(tc[1] * 10.0), fract(tc[0] * 10.0));
-    vec2 t2 = vec2(fract(tc[0] * 100.0), fract(tc[1] * 100.0));
-    vec2 t3 = vec2(fract(tc[0] * 1000.0), fract(tc[1] * 1000.0));
-
-    vec4 c1 = texture2D(tex, tc);
-    vec4 c2 = texture2D(tex, t1)-0.5;
-    vec4 c3 = texture2D(tex, t2)-0.5;
-    vec4 c4 = texture2D(tex, t3)-0.5;
-    float h = 0.9*c1.r + 0.1*c2.g + 0.05*c3.b + 0.002*c4.r;
-
+    float h = getHCR(tex, tc, 5).x;
     h = clamp(h, b_water, 1.0)-b_water;
 
     return 1.0+0.1*h;
@@ -96,25 +101,15 @@ void main(){
         gl_TessCoord.y * tcLightDir[1] +
         gl_TessCoord.z * tcLightDir[2]);
 
-    if (gl_TessCoord.x > 0.8) {
-        tu = tcTexCoord[1] - texCoord;
-        tv = tcTexCoord[2] - texCoord;
-        pu = normalize(gl_in[1].gl_Position.xyz) - p;
-        pv = normalize(gl_in[2].gl_Position.xyz) - p;
-    } else if (gl_TessCoord.y > 0.8) {
-        tu = tcTexCoord[2] - texCoord;
-        tv = tcTexCoord[0] - texCoord;
-        pu = normalize(gl_in[2].gl_Position.xyz) - p;
-        pv = normalize(gl_in[0].gl_Position.xyz) - p;
-    } else  {
-        tu = tcTexCoord[0] - texCoord;
-        tv = tcTexCoord[1] - texCoord;
-        pu = normalize(gl_in[0].gl_Position.xyz) - p;
-        pv = normalize(gl_in[1].gl_Position.xyz) - p;
-    }
+    tu = tcTexCoord[0] - texCoord;
+    tv = tcTexCoord[1] - texCoord;
+    tw = tcTexCoord[2] - texCoord;
+    pu = normalize(gl_in[0].gl_Position.xyz) - p;
+    pv = normalize(gl_in[1].gl_Position.xyz) - p;
+    pw = normalize(gl_in[2].gl_Position.xyz) - p;
     
 
 //    vNormal = normalize(TransformNormal(gl_Position.xyz));
-    gl_Position = TransformWorldViewProjection(gl_Position);
+        gl_Position = TransformWorldViewProjection(gl_Position);
 }
 
