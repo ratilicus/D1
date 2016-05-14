@@ -110,7 +110,7 @@ void main(){
     pw = normalize(gl_in[2].gl_Position.xyz) - p;
     
 
-//    vNormal = normalize(TransformNormal(gl_Position.xyz));
-        gl_Position = TransformWorldViewProjection(gl_Position);
+    vNormal = normalize(TransformNormal(gl_Position.xyz));
+    gl_Position = TransformWorldViewProjection(gl_Position);
 }
 
