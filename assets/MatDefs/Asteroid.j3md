@@ -168,10 +168,9 @@ MaterialDef Phong Lighting {
         LightMode MultiPass
 
         VertexShader GLSL100:   MatDefs/HM.vert
-        TessellationControlShader GLSL400:   MatDefs/Tess.tsctrl
-        TessellationEvaluationShader GLSL400:   MatDefs/Tess.tseval
-        FragmentShader GLSL400: MatDefs/HM.frag
-//        FragmentShader GLSL400: MatDefs/simple.frag
+        TessellationControlShader GLSL400:   MatDefs/Asteroid.tsctrl
+        TessellationEvaluationShader GLSL400:   MatDefs/Asteroid.tseval
+        FragmentShader GLSL400: MatDefs/Asteroid.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

@@ -58,7 +58,6 @@ vec4 getHCR(sampler2D tex, vec2 tc, int loops) {
 
 float getHeight(sampler2D tex, vec2 tc) {
     float h = getHCR(tex, tc, 5).x;
-    h = clamp(h, b_water, 1.0)-b_water;
 
     return 1.0+m_HeightMultiplier*h;
 }

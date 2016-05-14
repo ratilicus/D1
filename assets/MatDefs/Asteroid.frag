@@ -41,10 +41,10 @@ uniform float m_Shininess;
 
 // TODO: turn these into uniform + abstract the height layers
 vec3 deep_water = vec3(0.0, 0.0, 0.2);
-vec3 water = vec3(0.2, 0.2, 0.51);
-vec3 sand = vec3(0.86, 0.82, 0.71);
-vec3 grass = vec3(0.72, 0.76, 0.45);
-vec3 dark_grass = vec3(0.18, 0.27, 0.07);
+vec3 water = vec3(0.2);
+vec3 sand = vec3(0.86);
+vec3 grass = vec3(0.72);
+vec3 dark_grass = vec3(0.18);
 float b_dwater = 0.5;
 float b_water = 0.55;
 float b_sand = 0.58;
@@ -75,30 +75,27 @@ vec4 getColor(vec3 hcr) {
     if (h < b_dwater) {
       // deep water
       color.rgb = mix(deep_water, water, (h+ 0.1*r)/b_dwater)*c;
-      color.a = 1.5 + 0.15* sin(10f*m_Timer*c);
 
     } else if (h < b_water) {
       // water
       float s = (h - b_dwater)*10.0;
       color.rgb = mix(water, sand, s)*c;
-      color.a = 1.5 + 0.15* sin(8f*m_Timer*c);
 
     } else if (h < b_sand) {
       // sand -> grass
       color.rgb = mix(sand, grass, c)*r;
-      color.a = 0.25+c;
+      color.a = 1.3;
 
     } else {
       // grass
       color.rgb = mix(grass, dark_grass, c)*r;
-      color.a = 0.25+c;
+    color.a = 1.5;
     }
 
     return color;
 }
 
 float getHeight(float h) {
-    h = clamp(h, b_water, 1.0)-b_water;
     return 1.0+m_HeightMultiplier*h;
 }
 
@@ -117,25 +114,21 @@ void main(){
 
     // get height at nearby coords and figure out normal 
     // TODO: fix issue with borders
-    float s = mix(250.0, 1000.0, 1.0 - of);
+    float s = mix(250.0, 500.0, 1.0 - of);
     vec3 vNormal;
 
-    if (hcr.x < b_water) {
-        vNormal = normalize(TransformNormal(p));
-    } else {
-        float h = getHeight(hcr.x);
+    float h = getHeight(hcr.x);
 
-        float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s, 6-o).x);
-        float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s, 6-o).x);
-        float twh = getHeight(getHCR(m_DiffuseMap, texCoord+tw/s, 6-o).x);
+    float tuh = getHeight(getHCR(m_DiffuseMap, texCoord+tu/s, 6-o).x);
+    float tvh = getHeight(getHCR(m_DiffuseMap, texCoord+tv/s, 6-o).x);
+    float twh = getHeight(getHCR(m_DiffuseMap, texCoord+tw/s, 6-o).x);
 
-        vec3 up = p*h;
-        vNormal = normalize(TransformNormal(normalize(
-                    cross((p + pu/s) * tuh - up, (p + pv/s) * tvh - up)+
-                    cross((p + pv/s) * tvh - up, (p + pw/s) * twh - up)+
-                    cross((p + pw/s) * twh - up, (p + pu/s) * tuh - up)
-            )));
-    }
+    vec3 up = p*h;
+    vNormal = normalize(TransformNormal(normalize(
+                cross((p + pu/s) * tuh - up, (p + pv/s) * tvh - up)+
+                cross((p + pv/s) * tvh - up, (p + pw/s) * twh - up)+
+                cross((p + pw/s) * twh - up, (p + pu/s) * tuh - up)
+        )));
 
     float alpha = DiffuseSum.a * color.a;
 

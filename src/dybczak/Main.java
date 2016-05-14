@@ -40,7 +40,6 @@ public class Main extends SimpleApplication implements ActionListener  {
     private final Vector3f vel = new Vector3f();
     float qa=0;
     Quaternion q = new Quaternion(0.1f, 0.9f, 0f, 1f);
-    Geometry sphereGeo,  sphereGeo2;
     Node planetNode;
     Material sphereMat;
     float timer;
@@ -96,10 +95,71 @@ public class Main extends SimpleApplication implements ActionListener  {
         }
 
     }
-    
+
+    Geometry addPlanet(ColorRGBA color, float heightMultiplier) {
+        /* PLANET */
+        Sphere sphereMesh = new Sphere(16, 16, 2f);
+        sphereMesh.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
+        TangentBinormalGenerator.generate(sphereMesh);           // for lighting effect
+
+        sphereMat = new Material(assetManager, "MatDefs/HM.j3md");
+        sphereMat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/c3.png"));
+        sphereMat.setFloat("SphereRadius", 2f);
+        sphereMat.setFloat("HeightMultiplier", heightMultiplier);
+        //sphereMat.setBoolean("UseMaterialColors",true);    
+        sphereMat.setColor("Ambient", color);
+        sphereMat.setColor("Diffuse", color);
+        sphereMat.setColor("Specular", color.mult(.5f));
+        sphereMat.setFloat("Shininess", 116f);  // [0,128]
+        sphereMat.setReceivesShadows(true);
+        //sphereMat.getAdditionalRenderState().setWireframe(true);
+
+        Geometry sphereGeo = new Geometry("Planet", sphereMesh);
+        sphereGeo.getMesh().setMode(Mesh.Mode.Patch);
+        sphereGeo.getMesh().setPatchVertexCount(3);
+        sphereGeo.setMaterial(sphereMat);
+        sphereGeo.setShadowMode(ShadowMode.CastAndReceive);
+        sphereGeo.setQueueBucket(RenderQueue.Bucket.Opaque);
+        // TODO: need a way to pass timer
+        
+        return sphereGeo;
+    }
+
+        Geometry addAsteroid(ColorRGBA color, float heightMultiplier) {
+        /* PLANET */
+        Sphere sphereMesh = new Sphere(16, 16, 2f);
+        sphereMesh.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
+        TangentBinormalGenerator.generate(sphereMesh);           // for lighting effect
+
+        sphereMat = new Material(assetManager, "MatDefs/Asteroid.j3md");
+        sphereMat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/c3.png"));
+        sphereMat.setFloat("SphereRadius", 2f);
+        sphereMat.setFloat("HeightMultiplier", heightMultiplier);
+        //sphereMat.setBoolean("UseMaterialColors",true);    
+        sphereMat.setColor("Ambient", color);
+        sphereMat.setColor("Diffuse", color);
+        sphereMat.setColor("Specular", color.mult(.5f));
+        sphereMat.setFloat("Shininess", 116f);  // [0,128]
+        sphereMat.setReceivesShadows(true);
+        //sphereMat.getAdditionalRenderState().setWireframe(true);
+
+        Geometry sphereGeo = new Geometry("Asteroid", sphereMesh);
+        sphereGeo.getMesh().setMode(Mesh.Mode.Patch);
+        sphereGeo.getMesh().setPatchVertexCount(3);
+        sphereGeo.setMaterial(sphereMat);
+        sphereGeo.setShadowMode(ShadowMode.CastAndReceive);
+        sphereGeo.setQueueBucket(RenderQueue.Bucket.Opaque);
+        // TODO: need a way to pass timer
+        
+        return sphereGeo;
+    }
+
     @Override
     public void simpleInitApp() {
-
+        planetNode = new Node("PlanetSystem");
+        rootNode.attachChild(planetNode);
+        
+        // SUN
         Geometry sun_sphere = new Geometry("Sun", new Sphere(8, 8, 15f));
         Material sun_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         sun_mat.setColor("Color", ColorRGBA.White);
@@ -111,68 +171,30 @@ public class Main extends SimpleApplication implements ActionListener  {
         sun_sphere.setShadowMode(ShadowMode.Off);
         sun_sphere.setQueueBucket(RenderQueue.Bucket.Sky);
         sun_sphere.setLocalTranslation(1000,0,0); // Move it a bit
-        
-        
-        Sphere sphereMesh = new Sphere(32,32, 2f);
-        sphereMesh.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
-        TangentBinormalGenerator.generate(sphereMesh);           // for lighting effect
 
-        Sphere sphereMesh2 = new Sphere(16,16, 2f);
-        sphereMesh2.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
-        TangentBinormalGenerator.generate(sphereMesh2);           // for lighting effect
-
-//        Material sphereMat = new Material(assetManager, "MatDefs/simple.j3md");
-//        sphereMat.getAdditionalRenderState().setWireframe(true);
-        
-        //Material sphereMat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
-        sphereMat = new Material(assetManager, "MatDefs/HM.j3md");
-        sphereMat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/c3.png"));
-        //sphereMat.setTexture("NormalMap", assetManager.loadTexture("Textures/c4.png"));
-sphereMat.setFloat("SphereRadius", 3f);
-
-        ColorRGBA color = new ColorRGBA(.7f, .7f, 1f, 1f);
-        sphereMat.setBoolean("UseMaterialColors",true);    
-        sphereMat.setColor("Ambient", color);
-        sphereMat.setColor("Diffuse", color);
-        sphereMat.setColor("Specular", color.mult(.5f));
-        sphereMat.setFloat("Shininess", 116f);  // [0,128]
-        sphereMat.setReceivesShadows(true);
-//sphereMat.getAdditionalRenderState().setWireframe(true);
-        
-        Material sphereMat2 = sphereMat.clone();
-        color = new ColorRGBA(.7f, .7f, .7f, 1f);
-        sphereMat2.setColor("Ambient", color);
-        sphereMat2.setColor("Diffuse", color);
-        sphereMat2.setColor("Specular", color.mult(.1f));
-sphereMat2.setFloat("SphereRadius", 1.0f);
-        
-        planetNode = new Node("PlanetSystem");
-        rootNode.attachChild(planetNode);
-        
-        sphereGeo = new Geometry("Earth", sphereMesh);
-sphereGeo.getMesh().setMode(Mesh.Mode.Patch);
-sphereGeo.getMesh().setPatchVertexCount(3);
-
-        sphereGeo.setMaterial(sphereMat);
-        sphereGeo.setLocalTranslation(0,0,0); // Move it a bit
+        Geometry sphereGeo;
+        // PLANET
+        sphereGeo = addPlanet(new ColorRGBA(.7f, .7f, 1f, 1f), 0.1f);
         sphereGeo.rotate(1.6f, 0 , 0);          // Rotate it a bit
         sphereGeo.setLocalScale(16.0f);
-        sphereGeo.setShadowMode(ShadowMode.CastAndReceive);
-        sphereGeo.setQueueBucket(RenderQueue.Bucket.Opaque);
         planetNode.attachChild(sphereGeo);
 
-        sphereGeo2 = new Geometry("Moon", sphereMesh2);
-        sphereGeo2.setMaterial(sphereMat2);
-        sphereGeo2.setLocalTranslation(128,0,0); // Move it a bit
-        sphereGeo2.rotate(1.6f, 0, 0);          // Rotate it a bit
-        sphereGeo2.setLocalScale(4f);
-        sphereGeo2.setShadowMode(ShadowMode.CastAndReceive);
-        sphereGeo2.setQueueBucket(RenderQueue.Bucket.Opaque);
-sphereGeo2.getMesh().setMode(Mesh.Mode.Patch);
-sphereGeo2.getMesh().setPatchVertexCount(3);
-               
-        planetNode.attachChild(sphereGeo2);
-
+        // MOON
+        sphereGeo = addAsteroid(new ColorRGBA(.7f, .7f, 0.7f, 1f), -0.1f);
+        sphereGeo.setLocalTranslation(128,0,0); // Move it a bit
+        sphereGeo.rotate(1.6f, 0, 0);          // Rotate it a bit
+        sphereGeo.setLocalScale(4f);
+        planetNode.attachChild(sphereGeo);
+        
+        // MOON
+        sphereGeo = addAsteroid(new ColorRGBA(.3f, .3f, 0.3f, 1f), -0.2f);
+        sphereGeo.setLocalTranslation(128,0,30); // Move it a bit
+        sphereGeo.rotate(1.6f, 0, 0);          // Rotate it a bit
+        sphereGeo.setLocalScale(2f);
+        planetNode.attachChild(sphereGeo);
+        
+        
+        /* LIGHTS AND EFFECTS */
         AmbientLight al = new AmbientLight();
         al.setColor(ColorRGBA.White.mult(.15f));
         rootNode.addLight(al);
@@ -183,10 +205,7 @@ sphereGeo2.getMesh().setPatchVertexCount(3);
         rootNode.addLight(sun);
         viewPort.setBackgroundColor(new ColorRGBA(.1f, .1f, .1f, 0.1f));
         //flyCam.setMoveSpeed(100);
-        setUpKeys();
         FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
-
-        cam.setLocation(new Vector3f(60, 0, 0));
         
         LightScatteringFilter lsFilter = new LightScatteringFilter(sun.getDirection().mult(-1000f));
         //lsFilter.setLightDensity(0.9f);
@@ -216,6 +235,11 @@ sphereGeo2.getMesh().setPatchVertexCount(3);
         fpp.addFilter(bFilter);
         
         this.viewPort.addProcessor(fpp); 
+
+    
+        cam.setLocation(new Vector3f(60, 0, 0));
+
+        setUpKeys();
     }
   
 

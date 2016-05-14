@@ -1,0 +1,55 @@
+/*
+Height Map Tesselation Control Shader
+By: Adam Dybczak
+*/
+
+
+layout(vertices=3) out;
+
+in vec4 worldPos[];
+in vec2 texCoord[];
+
+out vec2 tcTexCoord[];
+
+in vec3 AmbientSum[];
+in vec4 DiffuseSum[];
+in vec3 SpecularSum[];
+
+out vec3 tcAmbientSum[];
+out vec4 tcDiffuseSum[];
+out vec3 tcSpecularSum[];
+
+in vec3 vViewDir[];
+in vec4 vLightDir[];
+
+out vec3 tcViewDir[];
+out vec4 tcLightDir[];
+
+int getFrag(vec4 pos) {
+   return 16-int(clamp(pow(0.326666 * pos.z/2, 2.0), 1.0, 15.0));
+}
+
+
+void main(){
+    if (gl_InvocationID == 0){
+        // TODO: fix patch tearing
+        int p0 = getFrag(worldPos[0]);
+        int p1 = getFrag(worldPos[1]);
+        int p2 = getFrag(worldPos[2]);
+
+        gl_TessLevelOuter[0] = max(p1, p2);
+        gl_TessLevelOuter[1] = max(p0, p2);
+        gl_TessLevelOuter[2] = max(p0, p1);
+
+        gl_TessLevelInner[0]=max(p0, max(p1, p2));
+    }
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    tcTexCoord[gl_InvocationID] = texCoord[gl_InvocationID];
+    tcAmbientSum[gl_InvocationID] = AmbientSum[gl_InvocationID];
+    tcDiffuseSum[gl_InvocationID] = DiffuseSum[gl_InvocationID];
+    tcSpecularSum[gl_InvocationID] = SpecularSum[gl_InvocationID];
+    tcViewDir[gl_InvocationID] = vViewDir[gl_InvocationID];
+    tcLightDir[gl_InvocationID] = vLightDir[gl_InvocationID];
+}
+
+
