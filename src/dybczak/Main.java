@@ -128,16 +128,16 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         //System.out.println(binding +"|"+ value+"|"+tpf);
         switch (binding.charAt(1)) {
             case 'L':
-                MX = -value*20;
+                MX = -value*tpf *10000;
                 break;
             case 'R':
-                MX = value*20;
+                MX = value*tpf *10000;
                 break;
             case 'U':
-                MY = value*20;
+                MY = value*tpf *10000;
                 break;
             case 'D':
-                MY = -value*20;
+                MY = -value*tpf *10000;
                 break;
         }
     }
@@ -369,18 +369,18 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         vel.addLocal(shipNode.getLocalRotation().mult(lvel));
 
         //cursorPos.multLocal(1.0f - 2f * tpf);
-        cursorPos.x+=MX;
-        cursorPos.y+=MY;
-        updateCursor();
-
+        if (MX != 0f || MY != 0f) {
+            cursorPos.x+=MX;
+            cursorPos.y+=MY;
+            updateCursor();
+        }
         
         shipNode.move(vel);
-        if (abs(cursorPos.x)>0.1 || abs(cursorPos.y)>0.1 || RZ != 0.0) {
-            shipNode.rotate(-sign(cursorPos.y) * min(abs(cursorPos.y), 0.3f*tpf), -sign(cursorPos.x)*min(abs(cursorPos.x), 0.3f*tpf), -RZ*0.01f);
+        if (abs(cursorPos.x)>0.2 || abs(cursorPos.y)>0.2 || RZ != 0.0) {
+            shipNode.rotate(-sign(cursorPos.y) * min(abs(cursorPos.y)/10f, 100f)*tpf, -sign(cursorPos.x)*min(abs(cursorPos.x)/10f, 100f)*tpf, -RZ*0.01f);
         }
 
-        
         MX = 0;
-        MY=0;
+        MY = 0;
     }
 }
