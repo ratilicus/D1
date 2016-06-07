@@ -289,6 +289,7 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         ship.setLocalScale(.3f, .2f, .6f);
         Material mat = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         mat.setColor("Diffuse", ColorRGBA.Blue);
+        mat.getAdditionalRenderState().setDepthTest(false);
         //mat.getAdditionalRenderState().setWireframe(true);
         ship.setMaterial(mat);
         //rootNode.attachChild(ship);
