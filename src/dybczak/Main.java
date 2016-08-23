@@ -17,6 +17,7 @@ import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
 import static com.jme3.math.FastMath.abs;
 import static com.jme3.math.FastMath.sign;
@@ -51,13 +52,10 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
     Quaternion q = new Quaternion(0.1f, 0.9f, 0f, 1f);
     Node planetNode, shipNode;
     Material sphereMat;
-//    float timer;
-
     
     Picture staticCursor = new Picture("StaticCursor");
     Picture cursor = new Picture("Cursor");
     private Vector2f cursorPos = new Vector2f(0f, 0f);
-    
     
     public static void main(String[] args) {
         Main app = new Main();
@@ -80,16 +78,14 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         addMapping("P ", KeyInput.KEY_Q);    // Roll Left (Port)
         addMapping("S ", KeyInput.KEY_E);    // Roll Right (Starboard)
 
-   
-    
-       inputManager.addMapping("ML", new MouseAxisTrigger(MouseInput.AXIS_X, true));
-       inputManager.addMapping("MR", new MouseAxisTrigger(MouseInput.AXIS_X, false));
-       inputManager.addMapping("MU", new MouseAxisTrigger(MouseInput.AXIS_Y, false));
-       inputManager.addMapping("MD", new MouseAxisTrigger(MouseInput.AXIS_Y, true));
-       inputManager.addListener(this, "ML");
-       inputManager.addListener(this, "MR");
-       inputManager.addListener(this, "MU");
-       inputManager.addListener(this, "MD");
+        inputManager.addMapping("ML", new MouseAxisTrigger(MouseInput.AXIS_X, true));
+        inputManager.addMapping("MR", new MouseAxisTrigger(MouseInput.AXIS_X, false));
+        inputManager.addMapping("MU", new MouseAxisTrigger(MouseInput.AXIS_Y, false));
+        inputManager.addMapping("MD", new MouseAxisTrigger(MouseInput.AXIS_Y, true));
+        inputManager.addListener(this, "ML");
+        inputManager.addListener(this, "MR");
+        inputManager.addListener(this, "MU");
+        inputManager.addListener(this, "MD");
     
     }
 
@@ -144,13 +140,13 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
 
     Geometry addPlanet(ColorRGBA color, float heightMultiplier) {
         /* PLANET */
-        Sphere sphereMesh = new Sphere(16, 16, 2f);
+        Sphere sphereMesh = new Sphere(16, 16, 12f);
         //sphereMesh.setTextureMode(Sphere.TextureMode.Projected); // better quality on spheres
         //TangentBinormalGenerator.generate(sphereMesh);           // for lighting effect
 
         sphereMat = new Material(assetManager, "MatDefs/HM.j3md");
         sphereMat.setTexture("DiffuseMap", assetManager.loadTexture("Textures/c3.png"));
-        sphereMat.setFloat("SphereRadius", 2f);
+        sphereMat.setFloat("SphereRadius", 12f);
         sphereMat.setFloat("HeightMultiplier", heightMultiplier);
         //sphereMat.setBoolean("UseMaterialColors",true);    
         sphereMat.setColor("Ambient", color);
@@ -208,22 +204,69 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         rootNode.attachChild(planetNode);
         
         // SUN
-        Geometry sun_sphere = new Geometry("Sun", new Sphere(8, 8, 15f));
-        Material sun_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        sun_mat.setColor("Color", ColorRGBA.White);
-        sun_mat.setReceivesShadows(false);
-        sun_mat.getAdditionalRenderState().setDepthWrite(false);
-        //sun_mat.getAdditionalRenderState().setDepthTest(false);
-        sun_sphere.setMaterial(sun_mat);        
-        rootNode.attachChild(sun_sphere);
-        sun_sphere.setShadowMode(ShadowMode.Off);
-        sun_sphere.setQueueBucket(RenderQueue.Bucket.Sky);
-        sun_sphere.setLocalTranslation(1000,0,0); // Move it a bit
+        Geometry sunSphere = new Geometry("Sun", new Sphere(8, 8, 15f));
+        Material sunMat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        sunMat.setColor("Color", ColorRGBA.White);
+        sunMat.setReceivesShadows(false);
+        sunMat.getAdditionalRenderState().setDepthWrite(false);
+        //sunMat.getAdditionalRenderState().setDepthTest(false);
+        sunSphere.setMaterial(sunMat);
+        rootNode.attachChild(sunSphere);
+        sunSphere.setShadowMode(ShadowMode.Off);
+        sunSphere.setQueueBucket(RenderQueue.Bucket.Sky);
+        sunSphere.setLocalTranslation(1000,0,0); // Move it a bit
 
+        // LIGHTS AND EFFECTS
+        /*
+        AmbientLight al = new AmbientLight();
+        al.setColor(ColorRGBA.White.mult(.15f));
+        rootNode.addLight(al);
+        */
+        DirectionalLight sun = new DirectionalLight();
+        sun.setDirection(new Vector3f(-1,0,0).normalizeLocal());
+        sun.setColor(ColorRGBA.White);
+        rootNode.addLight(sun);
+        viewPort.setBackgroundColor(new ColorRGBA(.1f, .1f, .1f, 0.1f));
+        //flyCam.setMoveSpeed(100);
+
+        FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
+        /*
+        LightScatteringFilter lsFilter = new LightScatteringFilter(sun.getDirection().mult(-1000f));
+        //lsFilter.setLightDensity(0.9f);
+        lsFilter.setBlurStart(0.1f);
+        lsFilter.setNbSamples(64);
+        lsFilter.setLightPosition(new Vector3f(500, 0, 0));
+        fpp.addFilter(lsFilter);
+        */
+        /*
+        FogFilter fog=new FogFilter();
+        fog.setFogColor(new ColorRGBA(1f,1f,.7f, 1.0f));
+        //fog.setFogDistance(200);
+        fog.setFogDensity(0.5f);
+        fpp.addFilter(fog);
+        */
+        /*
+        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(assetManager, 1024, 3);
+        dlsf.setLight(sun);
+        dlsf.setEdgeFilteringMode(EdgeFilteringMode.PCF4);
+        dlsf.setShadowCompareMode(CompareMode.Hardware);
+        dlsf.setEnabled(true);
+        dlsf.setShadowIntensity(0.4f);
+        dlsf.setFlushQueues(true);
+        fpp.addFilter(dlsf);
+        */
+        /*
+        BloomFilter bFilter = new BloomFilter();
+        fpp.addFilter(bFilter);
+        */
+        this.viewPort.addProcessor(fpp); 
+
+        ////////////////////////////////////////////////////////////////////////
         // PLANET
         sphereGeo = addPlanet(new ColorRGBA(.7f, .7f, 1f, 1f), 0.1f);
         sphereGeo.rotate(1.6f, 0 , 0);          // Rotate it a bit
         sphereGeo.setLocalScale(16.0f);
+        sphereGeo.setLocalTranslation(-150,0,0); // Move it a bit
         planetNode.attachChild(sphereGeo);
 
         // MOON
@@ -239,51 +282,7 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         sphereGeo.rotate(1.6f, 0, 0);          // Rotate it a bit
         sphereGeo.setLocalScale(2f);
         planetNode.attachChild(sphereGeo);
-        
-        
-        /* LIGHTS AND EFFECTS */
-        AmbientLight al = new AmbientLight();
-        al.setColor(ColorRGBA.White.mult(.15f));
-        rootNode.addLight(al);
-        
-        DirectionalLight sun = new DirectionalLight();
-        sun.setDirection(new Vector3f(-1,0,0).normalizeLocal());
-        sun.setColor(ColorRGBA.White);
-        rootNode.addLight(sun);
-        viewPort.setBackgroundColor(new ColorRGBA(.1f, .1f, .1f, 0.1f));
-        //flyCam.setMoveSpeed(100);
-        FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
-        
-        LightScatteringFilter lsFilter = new LightScatteringFilter(sun.getDirection().mult(-1000f));
-        //lsFilter.setLightDensity(0.9f);
-        lsFilter.setBlurStart(0.1f);
-        lsFilter.setNbSamples(64);
-        lsFilter.setLightPosition(new Vector3f(500, 0, 0));
-        fpp.addFilter(lsFilter);
 
-        /*
-        FogFilter fog=new FogFilter();
-        fog.setFogColor(new ColorRGBA(1f,1f,.7f, 1.0f));
-        //fog.setFogDistance(200);
-        fog.setFogDensity(0.5f);
-        fpp.addFilter(fog);
-        */
-        
-        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(assetManager, 1024, 3);
-        dlsf.setLight(sun);
-        dlsf.setEdgeFilteringMode(EdgeFilteringMode.PCF4);
-        dlsf.setShadowCompareMode(CompareMode.Hardware);
-        dlsf.setEnabled(true);
-        dlsf.setShadowIntensity(0.4f);
-        dlsf.setFlushQueues(true);
-        fpp.addFilter(dlsf);
-        
-        BloomFilter bFilter = new BloomFilter();
-        fpp.addFilter(bFilter);
-        
-        this.viewPort.addProcessor(fpp); 
-
-        
         // SHIP + CAM
         Geometry ship = new Geometry("Ship", new Sphere(4, 4, 2f));
         ship.setLocalScale(.3f, .2f, .6f);
@@ -294,9 +293,8 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         ship.setMaterial(mat);
         //rootNode.attachChild(ship);
         
-//        flyCam.setMoveSpeed(40);
-//        flyCam.setEnabled(false);
-//        inputManager.setCursorVisible(false);
+        //flyCam.setEnabled(false);
+        //inputManager.setCursorVisible(false);
         
         shipNode = new Node();
         shipNode.attachChild(ship);
@@ -307,20 +305,14 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         cameraNode.setControlDir(ControlDirection.SpatialToCamera);
         shipNode.attachChild(cameraNode);
         cameraNode.setLocalTranslation(0,1,-3); // Move it a bit
-        
-//        cam.setLocation(new Vector3f(60, 0, 0));
 
-        setUpKeys();
-        
-
-        
+        // CURSOR
         staticCursor.move(0,0,-1);
         staticCursor.setPosition(settings.getWidth()/2-25, settings.getHeight()/2-25);
         staticCursor.setWidth(50);
         staticCursor.setHeight(50);
         staticCursor.setImage(assetManager, "Textures/cur.png", true);
         guiNode.attachChild(staticCursor);
-
         
         cursor.move(0,0,-1);
         cursor.setWidth(30);
@@ -329,6 +321,7 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
         guiNode.attachChild(cursor);
         updateCursor();
         
+        setUpKeys();
         
     }
 
@@ -376,9 +369,9 @@ public class Main extends SimpleApplication implements  AnalogListener, ActionLi
             updateCursor();
         }
         
-        shipNode.move(vel);
+        shipNode.move(vel.mult(tpf*1000));
         if (abs(cursorPos.x)>0.2 || abs(cursorPos.y)>0.2 || RZ != 0.0) {
-            shipNode.rotate(-sign(cursorPos.y) * min(abs(cursorPos.y)/10f, 100f)*tpf, -sign(cursorPos.x)*min(abs(cursorPos.x)/10f, 100f)*tpf, -RZ*0.01f);
+            shipNode.rotate(-sign(cursorPos.y) * min(abs(cursorPos.y)/10f, 100f)*tpf, -sign(cursorPos.x)*min(abs(cursorPos.x)/10f, 100f)*tpf, -RZ*tpf*2f);
         }
 
         MX = 0;

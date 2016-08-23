@@ -9,4 +9,5 @@ Sources:
 * http://www.informit.com/articles/article.aspx?p=2120983
 * http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/
 * http://in2gpu.com/2014/06/27/stitching-and-lod-using-tessellation-shaders-for-terrain-rendering/
-
+* http://stackoverflow.com/questions/9365217/jmonkeyengine-camera-follow
+* https://github.com/jMonkeyEngine/jmonkeyengine/blob/5970444b9c906fcdc64db38be356df869334f80b/jme3-examples/src/main/java/jme3test/gui/TestZOrder.java

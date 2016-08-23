@@ -104,7 +104,7 @@ float getHeight(float h) {
 
 void main(){
     // quantizing the level for display purposes to clearly see borders
-    int o = int(clamp(0.326666 * gl_FragCoord.z / gl_FragCoord.w / 2, 1.0, 5.0));
+    int o = int(clamp(0.0326666 * gl_FragCoord.z / gl_FragCoord.w / 2, 1.0, 5.0));
     float of = o / 5.0;
 
     vec3 hcr = getHCR(m_DiffuseMap, texCoord, 6-o).xyz;
